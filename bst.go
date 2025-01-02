@@ -1,44 +1,26 @@
 package bella
 
 import (
-	"strings"
+	"cmp"
 	"sync/atomic"
 )
 
-type node struct {
-	key         string
-	payload     []byte
-	left, right *node
-}
-
-// NewNode
-func NewNode(key string, payload []byte) *node {
-	return &node{
-		key:     key,
-		payload: payload,
-		left:    nil,
-		right:   nil,
-	}
+type node[K cmp.Ordered, T any] struct {
+	key         K
+	payload     T
+	left, right *node[K, T]
 }
 
 // BST
-type BST struct {
-	head *node
+type BST[K cmp.Ordered, T any] struct {
+	head *node[K, T]
 	size atomic.Int64
 }
 
-// New
-func New() *BST {
-	return &BST{
-		head: nil,
-		size: atomic.Int64{},
-	}
-}
-
 // Insert
-func (b *BST) Insert(key string, payload []byte) {
+func (b *BST[K, T]) Insert(key K, payload T) {
 
-	nn := &node{
+	nn := &node[K, T]{
 		key:     key,
 		payload: payload,
 		left:    nil,
@@ -57,8 +39,9 @@ func (b *BST) Insert(key string, payload []byte) {
 
 	for {
 
-		c := strings.Compare(n.key, nn.key)
+		c := compare(n.key, nn.key)
 		if c == -1 {
+
 			if n.left == nil {
 				n.left = nn
 				return
@@ -66,6 +49,7 @@ func (b *BST) Insert(key string, payload []byte) {
 
 			n = n.left
 			continue
+
 		} else if c == 0 {
 			n.payload = nn.payload
 			return
@@ -82,7 +66,7 @@ func (b *BST) Insert(key string, payload []byte) {
 }
 
 // Insert
-func (b *BST) InsertNode(nn *node) {
+func (b *BST[K, T]) InsertNode(nn *node[K, T]) {
 
 	if b.head == nil {
 		b.head = nn
@@ -96,7 +80,7 @@ func (b *BST) InsertNode(nn *node) {
 
 	for {
 
-		c := strings.Compare(n.key, nn.key)
+		c := compare(n.key, nn.key)
 		if c == -1 {
 			if n.left == nil {
 				n.left = nn
@@ -121,38 +105,38 @@ func (b *BST) InsertNode(nn *node) {
 }
 
 // Search
-func (b *BST) Search(key string) ([]byte, error) {
+func (b *BST[K, T]) Search(key K) (T, error) {
 	if b.head == nil {
-		return nil, ErrNilHead
+		return zero[T](), ErrNilHead
 	}
 
 	n := b.head
 
 	for {
 
-		c := strings.Compare(n.key, key)
-		if c == 0 {
+		c := compare(n.key, key)
+		if n.key == key {
 			return n.payload, nil
 		} else if c == -1 {
 			if n.left == nil {
-				return nil, ErrNotFound
+				return zero[T](), ErrNotFound
 			}
 			n = n.left
 		}
 
 		if n.right == nil {
-			return nil, ErrNotFound
+			return zero[T](), ErrNotFound
 		}
 		n = n.right
 	}
 }
 
 // InOrderTraversal
-func (b *BST) InOrderTraversal() []*node {
+func (b *BST[K, T]) InOrderTraversal() []*node[K, T] {
 	return inOrderTraversal(b.head)
 }
 
-func inOrderTraversal(n *node) []*node {
+func inOrderTraversal[K cmp.Ordered, T any](n *node[K, T]) []*node[K, T] {
 	if n == nil {
 		return nil
 	}
@@ -165,16 +149,16 @@ func inOrderTraversal(n *node) []*node {
 		return inOrderTraversal(n.right)
 	}
 
-	return []*node{n}
+	return []*node[K, T]{n}
 }
 
 // Empty
-func (b *BST) Empty() {
+func (b *BST[K, T]) Empty() {
 	b.head = nil
 	b.size.Store(0)
 }
 
 // Size
-func (b *BST) Size() int64 {
+func (b *BST[K, T]) Size() int64 {
 	return b.size.Load()
 }
