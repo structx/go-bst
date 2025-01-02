@@ -9,11 +9,11 @@ import (
 
 type BstSuite struct {
 	suite.Suite
-	btree *bella.BST
+	btree *bella.BST[string, []byte]
 }
 
 func (suite *BstSuite) SetupSuite() {
-	suite.btree = bella.New()
+	suite.btree = &bella.BST[string, []byte]{}
 }
 
 func (suite *BstSuite) TestInsert() {
