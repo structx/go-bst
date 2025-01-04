@@ -1,17 +1,17 @@
-package bella_test
+package bst_test
 
 import (
 	"testing"
 
-	"github.com/structx/bella"
+	"github.com/structx/go-bst"
 )
 
 var (
-	btree *bella.BtreeGN[int, []byte]
+	btree *bst.BtreeGN[int, []byte]
 )
 
 func init() {
-	btree = &bella.BtreeGN[int, []byte]{}
+	btree = &bst.BtreeGN[int, []byte]{}
 }
 
 func BenchmarkInsert(b *testing.B) {

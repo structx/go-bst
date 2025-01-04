@@ -1,19 +1,19 @@
-package bella_test
+package bst_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/structx/bella"
+	"github.com/structx/go-bst"
 )
 
 type BstSuite struct {
 	suite.Suite
-	btree *bella.BtreeGN[string, []byte]
+	btree *bst.BtreeGN[string, []byte]
 }
 
 func (suite *BstSuite) SetupSuite() {
-	suite.btree = &bella.BtreeGN[string, []byte]{}
+	suite.btree = &bst.BtreeGN[string, []byte]{}
 }
 
 func (suite *BstSuite) TestInsert() {
@@ -31,7 +31,7 @@ func (suite *BstSuite) TestSearch() {
 	suite.Equal([]byte("world"), value)
 
 	_, err = suite.btree.Search("missing")
-	suite.Equal(bella.ErrNotFound, err)
+	suite.Equal(bst.ErrNotFound, err)
 }
 
 func (suite *BstSuite) TestFlush() {

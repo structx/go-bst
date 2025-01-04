@@ -1,4 +1,4 @@
-package bella
+package bst
 
 import (
 	"cmp"
