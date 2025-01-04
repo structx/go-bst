@@ -9,11 +9,11 @@ import (
 
 type BstSuite struct {
 	suite.Suite
-	btree *bella.BST[string, []byte]
+	btree *bella.BtreeGN[string, []byte]
 }
 
 func (suite *BstSuite) SetupSuite() {
-	suite.btree = &bella.BST[string, []byte]{}
+	suite.btree = &bella.BtreeGN[string, []byte]{}
 }
 
 func (suite *BstSuite) TestInsert() {
@@ -22,24 +22,25 @@ func (suite *BstSuite) TestInsert() {
 
 func (suite *BstSuite) TestSearch() {
 
-	assert := suite.Assert()
-
 	suite.btree.Insert("hello", []byte("world"))
-	assert.Greater(suite.btree.Size(), int64(0))
+	suite.Greater(suite.btree.Size(), uintptr(0))
 
 	value, err := suite.btree.Search("hello")
-	assert.NoError(err)
+	suite.NoError(err)
 
-	assert.Equal([]byte("world"), value)
+	suite.Equal([]byte("world"), value)
+
+	_, err = suite.btree.Search("missing")
+	suite.Equal(bella.ErrNotFound, err)
 }
 
-func (suite *BstSuite) TestEmpty() {
+func (suite *BstSuite) TestFlush() {
 
-	assert := suite.Assert()
+	suite.btree.Insert("rick", []byte("morty"))
+	suite.GreaterOrEqual(suite.btree.Size(), uintptr(24))
 
-	suite.btree.Empty()
-
-	assert.Equal(int64(0), suite.btree.Size())
+	suite.btree.Flush()
+	suite.Equal(uintptr(0), suite.btree.Size())
 }
 
 func TestBstSuite(t *testing.T) {
