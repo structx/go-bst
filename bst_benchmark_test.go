@@ -7,11 +7,11 @@ import (
 )
 
 var (
-	btree *bella.BST[int, []byte]
+	btree *bella.BtreeGN[int, []byte]
 )
 
 func init() {
-	btree = &bella.BST[int, []byte]{}
+	btree = &bella.BtreeGN[int, []byte]{}
 }
 
 func BenchmarkInsert(b *testing.B) {

@@ -2,6 +2,8 @@ package bella
 
 import (
 	"cmp"
+	"unsafe"
+
 	"sync/atomic"
 )
 
@@ -17,13 +19,15 @@ type node[K cmp.Ordered, T any] struct {
 }
 
 // BST
-type BST[K cmp.Ordered, T any] struct {
+type BtreeGN[K cmp.Ordered, T any] struct {
 	head *node[K, T]
-	size atomic.Int64
+	size atomic.Uintptr
 }
 
 // Insert
-func (b *BST[K, T]) Insert(key K, payload T) {
+func (b *BtreeGN[K, T]) Insert(key K, payload T) {
+
+	defer b.size.Add(unsafe.Sizeof(payload))
 
 	nn := &node[K, T]{
 		key:     key,
@@ -34,11 +38,8 @@ func (b *BST[K, T]) Insert(key K, payload T) {
 
 	if b.head == nil {
 		b.head = nn
-		b.size.Store(1)
 		return
 	}
-
-	defer b.size.Add(1)
 
 	n := b.head
 
@@ -70,15 +71,14 @@ func (b *BST[K, T]) Insert(key K, payload T) {
 }
 
 // Insert
-func (b *BST[K, T]) InsertNode(nn *node[K, T]) {
+func (b *BtreeGN[K, T]) InsertNode(nn *node[K, T]) {
+
+	defer b.size.Add(unsafe.Sizeof(nn.payload))
 
 	if b.head == nil {
 		b.head = nn
-		b.size.Store(1)
 		return
 	}
-
-	defer b.size.Add(1)
 
 	n := b.head
 
@@ -110,7 +110,7 @@ func (b *BST[K, T]) InsertNode(nn *node[K, T]) {
 }
 
 // Search
-func (b *BST[K, T]) Search(key K) (T, error) {
+func (b *BtreeGN[K, T]) Search(key K) (T, error) {
 	if b.head == nil {
 		return zeroGN[T](), ErrNilHead
 	}
@@ -141,7 +141,7 @@ func (b *BST[K, T]) Search(key K) (T, error) {
 }
 
 // InOrderTraversal
-func (b *BST[K, T]) InOrderTraversal() []*node[K, T] {
+func (b *BtreeGN[K, T]) InOrderTraversal() []*node[K, T] {
 	return inOrderTraversal(b.head)
 }
 
@@ -161,13 +161,13 @@ func inOrderTraversal[K cmp.Ordered, T any](n *node[K, T]) []*node[K, T] {
 	return []*node[K, T]{n}
 }
 
-// Empty
-func (b *BST[K, T]) Empty() {
+// Flush
+func (b *BtreeGN[K, T]) Flush() {
 	b.head = nil
 	b.size.Store(0)
 }
 
 // Size
-func (b *BST[K, T]) Size() int64 {
+func (b *BtreeGN[K, T]) Size() uintptr {
 	return b.size.Load()
 }
