@@ -1,4 +1,4 @@
-module github.com/structx/bella
+module github.com/structx/go-bst
 
 go 1.22.5
 
