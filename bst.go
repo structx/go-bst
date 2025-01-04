@@ -2,9 +2,8 @@ package bst
 
 import (
 	"cmp"
-	"unsafe"
-
 	"sync/atomic"
+	"unsafe"
 )
 
 func zeroGN[T any]() T {
@@ -12,153 +11,95 @@ func zeroGN[T any]() T {
 	return t
 }
 
-type node[K cmp.Ordered, T any] struct {
-	key         K
-	payload     T
-	left, right *node[K, T]
+// Node
+type Node[K cmp.Ordered, T any] struct {
+	Key         K
+	Payload     T
+	left, right *Node[K, T]
 }
 
 // BST
 type BtreeGN[K cmp.Ordered, T any] struct {
-	head *node[K, T]
+	head *Node[K, T]
 	size atomic.Uintptr
 }
 
 // Insert
-func (b *BtreeGN[K, T]) Insert(key K, payload T) {
-
+func (b *BtreeGN[K, T]) Insert(key K, payload T) *Node[K, T] {
 	defer b.size.Add(unsafe.Sizeof(payload))
 
-	nn := &node[K, T]{
-		key:     key,
-		payload: payload,
+	nn := &Node[K, T]{
+		Key:     key,
+		Payload: payload,
 		left:    nil,
 		right:   nil,
 	}
 
 	if b.head == nil {
 		b.head = nn
-		return
+		return nn
 	}
 
-	n := b.head
-
-	for {
-
-		if c := cmp.Compare(n.key, nn.key); c == -1 {
-
-			if n.left == nil {
-				n.left = nn
-				return
-			}
-
-			n = n.left
-			continue
-
-		} else if c == 0 {
-			n.payload = nn.payload
-			return
-		}
-
-		if n.right == nil {
-			n.right = nn
-			return
-		}
-
-		n = b.head.right
-
-	}
+	return insertInOrder(b.head, nn)
 }
 
-// Insert
-func (b *BtreeGN[K, T]) InsertNode(nn *node[K, T]) {
+func insertInOrder[K cmp.Ordered, T any](n, nn *Node[K, T]) *Node[K, T] {
 
-	defer b.size.Add(unsafe.Sizeof(nn.payload))
-
-	if b.head == nil {
-		b.head = nn
-		return
+	if n.Key == nn.Key {
+		n = nn
+		return nn
 	}
 
-	n := b.head
-
-	for {
-
-		if c := cmp.Compare(n.key, nn.key); c == -1 {
-
-			if n.left == nil {
-				n.left = nn
-				return
-			}
-
-			n = n.left
-			continue
-
-		} else if c == 0 {
-			n.payload = nn.payload
-			return
+	if cmp.Less(nn.Key, n.Key) {
+		if n.left == nil {
+			n.left = nn
+			return nn
 		}
-
-		if n.right == nil {
-			n.right = nn
-			return
-		}
-
-		n = b.head.right
-
+		return insertInOrder(n.left, nn)
 	}
+
+	if n.right == nil {
+		n.right = nn
+		return nn
+	}
+
+	return insertInOrder(n.right, nn)
 }
 
 // Search
 func (b *BtreeGN[K, T]) Search(key K) (T, error) {
-	if b.head == nil {
-		return zeroGN[T](), ErrNilHead
+	return searchInOrder(b.head, key)
+}
+
+func searchInOrder[K cmp.Ordered, T any](n *Node[K, T], key K) (T, error) {
+	if n == nil {
+		return zeroGN[T](), ErrNotFound
 	}
 
-	n := b.head
-
-	for {
-
-		if c := cmp.Compare(n.key, key); c == 0 {
-			return n.payload, nil
-
-		} else if c == -1 {
-
-			if n.left == nil {
-				return zeroGN[T](), ErrNotFound
-			}
-
-			n = n.left
-			continue
-		}
-
-		if n.right == nil {
-			return zeroGN[T](), ErrNotFound
-		}
-
-		n = n.right
+	if n.Key == key {
+		return n.Payload, nil
 	}
+
+	if cmp.Less(key, n.Key) {
+		return searchInOrder(n.left, key)
+	}
+
+	return searchInOrder(n.right, key)
 }
 
 // InOrderTraversal
-func (b *BtreeGN[K, T]) InOrderTraversal() []*node[K, T] {
-	return inOrderTraversal(b.head)
+func (b *BtreeGN[K, T]) InOrderTraversal(f func(*Node[K, T]) error) {
+	inOrderTraversal(b.head, f)
 }
 
-func inOrderTraversal[K cmp.Ordered, T any](n *node[K, T]) []*node[K, T] {
+func inOrderTraversal[K cmp.Ordered, T any](n *Node[K, T], f func(*Node[K, T]) error) {
 	if n == nil {
-		return nil
+		return
 	}
 
-	if n.left != nil {
-		return inOrderTraversal(n.left)
-	}
-
-	if n.right != nil {
-		return inOrderTraversal(n.right)
-	}
-
-	return []*node[K, T]{n}
+	inOrderTraversal(n.left, f)
+	_ = f(n)
+	inOrderTraversal(n.right, f)
 }
 
 // Flush
